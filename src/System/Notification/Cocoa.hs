@@ -10,6 +10,7 @@ module System.Notification.Cocoa
 
 import           Control.Monad         (when)
 import           Data.ByteString       (ByteString)
+import           Data.Foldable         (for_)
 import           Data.Maybe            (fromJust, fromMaybe, isJust)
 import           Data.Monoid           ((<>))
 import           Data.String           (IsString (fromString))
@@ -23,8 +24,7 @@ import           Data.Time             (getCurrentTimeZone)
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import           Foreign.C             (CDouble (..), CInt (..), CLong (..))
 import           Language.ObjC.Inline  (ObjC, block, defClass)
-import           Language.ObjC.Inline  (objcCtxWithClasses)
-import           Language.ObjC.Inline  (toObjC')
+import           Language.ObjC.Inline  (objcCtxWithClasses, pure', toObjC')
 import qualified Language.ObjC.Inline  as C
 import           System.Random         (randomIO)
 
@@ -35,6 +35,7 @@ C.context (objcCtxWithClasses [defClass "NSUserNotificationCenter"
                               ,defClass "NSUserNotification"
                               ])
 C.import_ "<Foundation/Foundation.h>"
+C.import_ "<AppKit/AppKit.h>"
 C.import_ "BundleSnatcher.h"
 
 data Notification = Notification
@@ -50,6 +51,7 @@ data Notification = Notification
                     , notifDeliveryRepeatInterval :: Maybe DiffTime
                     , notifSoundName              :: Maybe Text
                     , notifBundleName             :: Text
+                    , notifAppIcon                :: Maybe ByteString
                     }
                   deriving (Show)
 
@@ -66,6 +68,7 @@ newNotification = Notification { notifTitle = ""
                                , notifDeliveryRepeatInterval = Nothing
                                , notifSoundName  = Nothing
                                , notifBundleName = "com.konn-san.dummy-notifier"
+                               , notifAppIcon = Nothing
                                }
 
 instance IsString Notification where
@@ -99,9 +102,23 @@ newUserNotification Notification{..} = do
                  notif.soundName = $raw:(NSString *sound);
                  return notif;
                } |]
-  when (isJust notifDeliveryDate) $ do
-    let date = fromJust notifDeliveryDate
-        zone = toEnum $ timeZoneMinutes (zonedTimeZone date) * 60
+  for_ notifAppIcon $ \icon ->
+    [block| void { [($raw:(NSUserNotification *notif))
+                      setValue: [[NSImage alloc] initWithData: $obj:(NSData *icon)]
+                      forKey: @"_identityImage"];
+                   [($raw:(NSUserNotification *notif))
+                      setValue: @(false)
+                      forKey: @"_identityImageHasBorder"];
+                  }
+          |]
+
+  for_ notifImage $ \img ->
+    [C.block| void { ($raw:(NSUserNotification *notif)).contentImage =
+                         [[NSImage alloc] initWithData: $obj:(NSData *img)];
+     }|]
+
+  for_ notifDeliveryDate $ \ date -> do
+    let zone = toEnum $ timeZoneMinutes (zonedTimeZone date) * 60
         secs = fromRational $ toRational $ utcTimeToPOSIXSeconds $ zonedTimeToUTC date
     [block| void {
               NSUserNotification *notif = $raw:(NSUserNotification *notif);
