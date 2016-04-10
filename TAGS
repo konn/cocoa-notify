@@ -1,0 +1,42 @@
+
+./examples/hello-notify.hs,52
+module Main Main1,2
+main main5,6
+main main6,7
+
+./Setup.hs,15
+main main1,2
+
+./src/System/Notification/Cocoa.hs,1394
+module System.Notification.CocoaSystem.Notification.Cocoa2,3
+type NSUserNotification NSUserNotification29,30
+type NSUserNotificationCenter NSUserNotificationCenter30,31
+data Notification Notification38,39
+data Notification = NotificationNotification38,39
+                    { notifTitle notifTitle39,40
+                    , notifSubtitle notifSubtitle40,41
+                    , notifInformativeText notifInformativeText41,42
+                    , notifImage notifImage42,43
+                    , notifIdentifier notifIdentifier43,44
+                    , notifActionButton notifActionButton44,45
+                    , notifOtherButton notifOtherButton45,46
+                    , notifHasReplyButton notifHasReplyButton46,47
+                    , notifDeliveryDate notifDeliveryDate47,48
+                    , notifDeliveryRepeatInterval notifDeliveryRepeatInterval48,49
+                    , notifSoundName notifSoundName49,50
+                    , notifBundleName notifBundleName50,51
+newNotification newNotification54,55
+newNotification newNotification55,56
+instance instance69,70
+defaultCenter defaultCenter72,73
+defaultCenter defaultCenter73,74
+newUserNotification newUserNotification77,78
+newUserNotification newUserNotification78,79
+deliver deliver113,114
+deliver deliver114,115
+schedule schedule120,121
+schedule schedule121,122
+
+./test/Spec.hs,30
+main main0,1
+main main1,2
