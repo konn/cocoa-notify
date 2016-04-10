@@ -1,11 +1,19 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main where
-import Control.Concurrent
+import Data.ByteString           (ByteString)
+import Data.FileEmbed            (embedFile)
 import System.Notification.Cocoa
 
+icon :: ByteString
+icon = $(embedFile "data/icon.png")
+
+content = $(embedFile "data/content.png")
+
 main :: IO ()
-main = do
+main =
   schedule "Hello!" { notifSubtitle = Just "How do you do?"
-                   , notifInformativeText = "Nice!"
-                   }
-  threadDelay $ 10 * 10^6
+                    , notifInformativeText = "Nice!"
+                    , notifSoundName = Just defaultNotificationSound
+                    , notifAppIcon   = Just icon
+                    , notifImage     = Just content
+                    }
