@@ -3,6 +3,7 @@
 module System.Notification.Cocoa
     ( Notification (..)
     , newNotification
+    , defaultNotificationSound
     , deliver
     , schedule
     ) where
@@ -110,6 +111,10 @@ newUserNotification Notification{..} = do
               NSLog(@"deliv Zone set");
             } |]
   return notif
+
+defaultNotificationSound :: Text
+defaultNotificationSound = [pure'| NSString * { NSUserNotificationDefaultSoundName } |]
+
 
 deliver :: Notification -> IO ()
 deliver notif = do
