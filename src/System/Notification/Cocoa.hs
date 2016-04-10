@@ -16,11 +16,10 @@ import           Data.Monoid           ((<>))
 import           Data.String           (IsString (fromString))
 import           Data.Text             (Text)
 import qualified Data.Text             as T
-import           Data.Time             (DiffTime, ZonedTime, timeZoneMinutes)
-import           Data.Time             (zonedTimeToUTC, zonedTimeZone)
-import           Data.Time             (getCurrentTime)
-import           Data.Time             (utcToZonedTime)
-import           Data.Time             (getCurrentTimeZone)
+import           Data.Time             (DiffTime, ZonedTime, getCurrentTime)
+import           Data.Time             (getCurrentTimeZone, timeZoneMinutes)
+import           Data.Time             (utcToZonedTime, zonedTimeToUTC)
+import           Data.Time             (zonedTimeZone)
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import           Foreign.C             (CDouble (..), CInt (..), CLong (..))
 import           Language.ObjC.Inline  (ObjC, block, defClass)
@@ -123,9 +122,7 @@ newUserNotification Notification{..} = do
     [block| void {
               NSUserNotification *notif = $raw:(NSUserNotification *notif);
               notif.deliveryDate = [NSDate dateWithTimeIntervalSince1970: $(double secs)];
-              NSLog(@"deliv Date set");
               notif.deliveryTimeZone = [NSTimeZone timeZoneForSecondsFromGMT: $(NSInteger zone)];
-              NSLog(@"deliv Zone set");
             } |]
   return notif
 
@@ -135,21 +132,17 @@ defaultNotificationSound = [pure'| NSString * { NSUserNotificationDefaultSoundNa
 
 deliver :: Notification -> IO ()
 deliver notif = do
-  putStrLn "initing..."
   obj <- newUserNotification notif
-  putStrLn "inited. passing..."
   [C.exp| void { [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification: $raw:(NSUserNotification *obj)] } |]
 
 schedule :: Notification -> IO ()
 schedule notif = do
-  putStrLn "initing..."
   zone <- getCurrentTimeZone
   now <- utcToZonedTime zone <$> getCurrentTime
   let notif' | isJust (notifDeliveryDate notif) = notif
              | otherwise = notif { notifDeliveryDate = Just now }
   obj <- newUserNotification notif'
   let name = notifBundleName notif
-  putStrLn "inited. passing..."
   [C.exp| void {
               snatchingBundle($obj:(NSString *name),
                               ^void {[[NSUserNotificationCenter defaultUserNotificationCenter] scheduleNotification: $raw:(NSUserNotification *obj)];}) } |]
